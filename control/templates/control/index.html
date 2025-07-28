@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HipeRobo - Kendali Robot</title>
+  <!-- Menggunakan tag static untuk memanggil file CSS -->
+  <link rel="stylesheet" href="{% static 'control/style.css' %}">
+</head>
+<body>
+  <!-- Status Koneksi -->
+  <div class="status-container">
+    <div id="connectionStatus" class="status-indicator disconnected">
+      <svg class="status-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      <span id="statusText">🔴 TERPUTUS</span>
+    </div>
+  </div>
+
+  <!-- Kontainer Kendali Utama -->
+  <div class="control-container">
+    <!-- Panel Arah (Sisi Kiri) -->
+    <div class="direction-pad">
+      <div class="direction-grid">
+        <button id="forwardBtn" class="control-button direction-btn">⬆️</button>
+        <button id="leftBtn" class="control-button direction-btn">⬅️</button>
+        <button class="control-button center-btn" disabled>⏹️</button>
+        <button id="rightBtn" class="control-button direction-btn">➡️</button>
+        <button id="backwardBtn" class="control-button direction-btn">⬇️</button>
+      </div>
+    </div>
+
+    <!-- Tombol Aksi (Sisi Kanan) -->
+    <div class="action-buttons">
+      <div class="action-group">
+        <div class="button-container">
+          <button id="autoButton" class="control-button auto-btn auto-off">AUTO OFF</button>
+        </div>
+        <div class="button-container">
+          <button id="pumpButton" class="control-button pump-btn">💧</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tombol Monitoring -->
+  <div class="monitoring-container">
+    <!-- Menggunakan tag url untuk link ke halaman monitoring, target="_blank" untuk membuka di tab baru -->
+    <a href="{% url 'monitoring' %}" class="monitoring-button" target="_blank">
+      <svg class="monitoring-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M4 20h16V4H4v16zm2-14h12v2H6V6zm0 4h12v2H6v-2zm0 4h12v2H6v-2z"/></svg>
+      <span>MONITORING</span>
+    </a>
+  </div>
+
+  <!-- Logo HipeRobo -->
+  <div class="logo-container">
+    <svg class="logo-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    REBELION
+    <span class="logo-subtitle">GEN-B x Shiperobo</span>
+  </div>
+
+  <!-- Memuat library MQTT dari CDN -->
+  <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+  <!-- Menggunakan tag static untuk memanggil file JavaScript -->
+  <script src="{% static 'control/script.js' %}"></script>
+</body>
+</html>
