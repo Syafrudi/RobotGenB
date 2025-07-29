@@ -6,12 +6,12 @@ let sensorData = [];
 
 // MQTT Configuration
 const MQTT_CONFIG = {
-    host: 'e8600f280ce3482996633b26e5c91eff.s1.eu.hivemq.cloud',
-    port: 8884,
+    host: '3.24.134.140', // Ganti dengan IP Publik EC2 Anda
+    port: 9001,          // Port WebSocket yang kita tentukan
     clientId: 'WebClient_' + Math.random().toString(16).substr(2, 8),
-    username: 'esp32',
-    password: 'Babacang2824',
-    useSSL: true
+    username: 'rebion_user', // Username yang Anda buat di Langkah 2
+    password: 'asdf1234', // Password yang Anda buat di Langkah 2
+    useSSL: false // PENTING! Kita belum setup sertifikat SSL untuk Mosquitto
 };
 
 let mqttClient = null;
@@ -46,6 +46,7 @@ function getSoilCondition(moisture) {
 }
 
 // Initialize MQTT connection
+// GANTI LAGI SELURUH FUNGSI initMQTT ANDA DENGAN INI
 function initMQTT() {
     console.log('Initializing MQTT connection...');
     
@@ -60,10 +61,11 @@ function initMQTT() {
 
     const connectOptions = {
         useSSL: MQTT_CONFIG.useSSL,
-        userName: MQTT_CONFIG.username,
-        password: MQTT_CONFIG.password,
+        userName: MQTT_CONFIG.username || "",
+        password: MQTT_CONFIG.password || "",
         onSuccess: onConnect,
         onFailure: onConnectFailure
+        // Properti 'reconnect' sudah dihapus dari sini
     };
 
     mqttClient.connect(connectOptions);
