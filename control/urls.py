@@ -1,12 +1,13 @@
 from django.urls import path
-from . import views # Impor views dari folder yang sama
+from . import views
 
 urlpatterns = [
-    # Jika URL kosong (homepage), panggil fungsi 'index_view'.
-    # name='index' digunakan oleh tag {% url 'index' %} di template.
+    # URL yang sudah ada
     path('', views.index_view, name='index'),
-
-    # Jika URL adalah 'monitoring/', panggil fungsi 'monitoring_view'.
-    # name='monitoring' digunakan oleh tag {% url 'monitoring' %} di template.
     path('monitoring/', views.monitoring_view, name='monitoring'),
+    
+    # URL BARU UNTUK AUTENTIKASI
+    path('register/', views.register_view, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ]

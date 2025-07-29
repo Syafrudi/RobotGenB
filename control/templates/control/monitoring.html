@@ -4,227 +4,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HipeRobo - Monitoring Pertanian</title>
+    <title>Smart Agriculture Monitoring</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- CSS untuk halaman ini bisa digabung ke style.css utama atau dibuat file terpisah -->
-    <!-- Untuk saat ini kita biarkan inline, tapi idealnya dipindah ke file .css -->
-    <style>
-        /* [ ... KODE CSS ANDA UNTUK HALAMAN MONITORING TETAP DI SINI ... ] */
-        /* Tidak saya tampilkan lagi agar tidak terlalu panjang, isinya sama dengan yang Anda berikan */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
-            min-height: 100vh;
-            color: #2d5016;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* ... dan seterusnya ... */
-
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <!-- Memanggil file CSS khusus untuk halaman monitoring -->
+    <link rel="stylesheet" href="{% static 'control/monitoring_style.css' %}">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌱 Smart Agriculture</h1>
-            <p>Monitoring IoT untuk Pertanian Pintar</p>
+            <h1>RE:BION Monitoring</h1>
+            <p>Solusi AI IoT untuk Pertanian Pintar</p>
         </div>
 
+        <!-- Top Controls -->
         <div class="top-controls">
-            <!-- ... Kontrol atas tetap sama ... -->
-            <!-- Menggunakan tag url untuk kembali ke halaman kendali -->
+            <div class="city-selector">
+                <label for="citySelect">Kota:</label>
+                <select id="citySelect" onchange="changeCity()">
+                    <option value="Jakarta">Jakarta</option>
+                    <option value="Surabaya">Sumbawa</option>
+                    <option value="Bandung">Bekasi</option>
+                </select>
+            </div>
+            <!-- Menggunakan tag URL Django untuk kembali ke halaman kendali -->
             <a href="{% url 'index' %}" class="control-btn">
                 <span>⚙️</span>
                 Menu Kendali
             </a>
-            <!-- ... -->
+            <button class="refresh-btn" onclick="refreshAllData()">
+                <span>🔄</span>
+                Refresh Data
+            </button>
+            {% if user.is_authenticated %}
+            <div class="user-info">
+            <span>Halo, <strong>{{ user.username }}</strong>!</span>
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="control-btn">Logout</button>
+            </form>
+        </div>
+        {% endif %}
         </div>
 
-        <!-- ... Bagian AI dan Cuaca tetap sama ... -->
-        
-        <!-- Bagian Sensor -->
-        <div class="sensors-section">
-            <!-- Data untuk sensor akan di-loop dari data yang dikirim Django -->
-            <!-- Ini adalah contoh bagaimana strukturnya nanti jika menggunakan data dari backend -->
+        <!-- ... sisa dari kode HTML Anda tetap sama persis ... -->
+        <!-- (MQTT Status, AI Section, Weather Section, Sensors Section, dll.) -->
+        <div class="mqtt-status">
+            <span id="mqttStatusIcon">🔴</span>
+            <span id="mqttStatusText" class="mqtt-disconnected">MQTT Disconnected</span>
+        </div>
+
+        <!-- AI Section -->
+        <div class="ai-section">
+            <div class="ai-title">
+                <span>🤖</span>
+                Smart AI Assistant
+            </div>
+            <div class="ai-subtitle">
+                Asisten AI untuk analisis dan rekomendasi pertanian cerdas
+            </div>
             
-            {% for sensor in sensors %}
+            <div class="ai-features">
+                <div class="ai-feature">
+                    <div class="ai-feature-icon">🌱</div>
+                    <div class="ai-feature-title">Rekomendasi Tanam</div>
+                    <div class="ai-feature-desc">Saran tanaman sesuai kondisi lingkungan</div>
+                </div>
+                <div class="ai-feature">
+                    <div class="ai-feature-icon">💧</div>
+                    <div class="ai-feature-title">Jadwal Penyiraman</div>
+                    <div class="ai-feature-desc">Optimasi jadwal penyiraman otomatis</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Section -->
+        <div class="weather-section">
+            <div class="weather-title">🌤️ Kondisi Cuaca</div>
+            
+            <div id="weatherLoading" class="loading">Memuat data cuaca...</div>
+            <div id="weatherError" style="display: none;"></div>
+            <div id="weatherInfo" class="weather-grid" style="display: none;">
+                <div class="weather-item">
+                    <div class="weather-icon" id="weatherIcon">🌤️</div>
+                    <div class="weather-value" id="temperature">--°C</div>
+                    <div class="weather-label" id="weatherDesc">--</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-icon">💧</div>
+                    <div class="weather-value" id="airHumidity">--%</div>
+                    <div class="weather-label">Kelembaban Udara</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-icon">🌬️</div>
+                    <div class="weather-value" id="windSpeed">-- km/h</div>
+                    <div class="weather-label">Kecepatan Angin</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-icon">📊</div>
+                    <div class="weather-value" id="pressure">-- hPa</div>
+                    <div class="weather-label">Tekanan</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensors Section -->
+        <div class="sensors-section">
             <div class="sensor-card">
                 <div class="sensor-header">
-                    <div class="sensor-title">Sensor Tanah {{ sensor.id }}</div>
+                    <div class="sensor-title">Sensor Kelembaban Tanah</div>
                     <div class="sensor-status">
-                        <div class="status-dot"></div>
-                        <span>Online</span>
+                        <div class="status-dot" id="sensorStatusDot"></div>
+                        <span id="sensorStatusText">Offline</span>
                     </div>
                 </div>
                 <div class="sensor-value-container">
                     <div>
-                        <!-- Nilai terakhir akan diisi oleh Django/JS -->
-                        <span class="sensor-value" id="sensor{{ sensor.id }}Value">--</span>
+                        <span class="sensor-value" id="sensorValue">--</span>
                         <span class="sensor-unit">%</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #5a7c47;" id="sensor{{ sensor.id }}Time">--:--:--</div>
+                    <div style="font-size: 0.85rem; color: #5a7c47;" id="sensorTime">--:--:--</div>
+                </div>
+                <div class="soil-condition">
+                    <div class="condition-icon" id="conditionIcon">🌱</div>
+                    <div class="condition-text" id="conditionText">Menunggu Data...</div>
                 </div>
                 <div class="humidity-bar">
-                    <div class="humidity-fill" id="sensor{{ sensor.id }}Bar" style="width: 0%;"></div>
+                    <div class="humidity-fill" id="sensorBar" style="width: 0%;"></div>
                 </div>
                 <div class="chart-container">
-                    <canvas id="chart{{ sensor.id }}"></canvas>
+                    <canvas id="soilChart"></canvas>
                 </div>
             </div>
-            {% empty %}
-            <!-- Pesan ini akan muncul jika variabel 'sensors' kosong -->
-            <p>Tidak ada data sensor untuk ditampilkan.</p>
-            {% endfor %}
-
         </div>
         
         <div class="last-update">
             <p>Terakhir diupdate: <span id="lastUpdateTime">--</span></p>
         </div>
+
     </div>
 
-    <!-- 
-      PENYEMPURNAAN KUNCI: Injeksi Data dari Django ke JavaScript.
-      Kita akan menaruh data JSON dari view Django ke dalam script tag ini.
-      JavaScript kemudian akan membaca dari sini, bukan membuat data dummy sendiri.
-      '|safe' diperlukan agar Django tidak meng-escape karakter kutip.
-    -->
-    {{ sensor_data_json|safe }}
-
-    <!-- Pindahkan semua JavaScript ke bagian bawah body -->
-    <script>
-        // --- KONFIGURASI DAN VARIABEL GLOBAL ---
-        const API_KEY = '5b7fb90b1dec5309ecaa236b414b0ccb'; // Sebaiknya dipindah ke backend nanti
-        const BASE_URL = 'https://api.openweathermap.org/data/2.5';
-        let currentCity = 'Jakarta';
-        let charts = {};
-        
-        // --- FUNGSI UTAMA ---
-
-        // Fungsi ini membaca data yang sudah disiapkan oleh Django di dalam HTML
-        function getInitialData() {
-            const dataElement = document.getElementById('sensor-data');
-            if (dataElement) {
-                return JSON.parse(dataElement.textContent);
-            }
-            // Fallback jika data tidak ditemukan, kembalikan struktur kosong
-            return { 1: [], 2: [], 3: [], 4: [] };
-        }
-
-        // Inisialisasi Chart menggunakan data awal
-        function initializeCharts(initialSensorData) {
-            const chartConfig = {
-                type: 'line',
-                data: { labels: [], datasets: [{ /* ... konfigurasi dataset ... */ }] },
-                options: { /* ... konfigurasi options ... */ }
-            };
-
-            for (const sensorId in initialSensorData) {
-                const ctx = document.getElementById(`chart${sensorId}`).getContext('2d');
-                charts[sensorId] = new Chart(ctx, JSON.parse(JSON.stringify(chartConfig)));
-                
-                // Isi chart dengan data awal
-                const labels = initialSensorData[sensorId].map(d => d.time);
-                const values = initialSensorData[sensorId].map(d => d.value);
-
-                charts[sensorId].data.labels = labels;
-                charts[sensorId].data.datasets[0].data = values;
-                charts[sensorId].update();
-
-                // Update juga nilai tampilan terakhir
-                updateSensorDisplay(sensorId, values[values.length - 1] || 0);
-            }
-        }
-
-        // Fungsi untuk mengupdate tampilan satu sensor (nilai, bar, waktu)
-        function updateSensorDisplay(sensorId, value) {
-            if (!value) return;
-            const now = new Date();
-            
-            document.getElementById(`sensor${sensorId}Value`).textContent = value;
-            document.getElementById(`sensor${sensorId}Bar`).style.width = `${value}%`;
-            document.getElementById(`sensor${sensorId}Time`).textContent = now.toLocaleTimeString('id-ID');
-        }
-
-        // Fungsi untuk mengambil data baru secara periodik (nantinya dari API Django)
-        async function refreshSensorData() {
-            try {
-                // Di masa depan, ini akan memanggil API Django, bukan generate data
-                // const response = await fetch('/api/sensor-data/');
-                // const newSensorData = await response.json();
-                
-                // UNTUK SAAT INI: kita tetap simulasi data baru
-                const newSensorData = generateMockDataUpdate();
-
-                for (const sensorId in newSensorData) {
-                    const newValue = newSensorData[sensorId];
-                    updateChart(sensorId, newValue);
-                    updateSensorDisplay(sensorId, newValue);
-                }
-                document.getElementById('lastUpdateTime').textContent = new Date().toLocaleString('id-ID');
-
-            } catch (error) {
-                console.error("Gagal refresh data sensor:", error);
-            }
-        }
-
-        // Fungsi simulasi data baru (bisa dihapus saat API sudah ada)
-        function generateMockDataUpdate() {
-            return {
-                1: Math.floor(Math.random() * 40) + 40,
-                2: Math.floor(Math.random() * 40) + 40,
-                3: Math.floor(Math.random() * 40) + 40,
-                4: Math.floor(Math.random() * 40) + 40,
-            };
-        }
-        
-        // Fungsi untuk mengupdate chart dengan data baru
-        function updateChart(sensorId, value) {
-            const chart = charts[sensorId];
-            if (!chart) return;
-
-            const timeLabel = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-            chart.data.labels.push(timeLabel);
-            chart.data.datasets[0].data.push(value);
-
-            // Batasi data point agar tidak terlalu banyak
-            if (chart.data.labels.length > 20) {
-                chart.data.labels.shift();
-                chart.data.datasets[0].data.shift();
-            }
-            chart.update();
-        }
-
-        // Fungsi untuk memuat data cuaca (tidak berubah)
-        async function loadWeatherData() { /* ... kode sama seperti sebelumnya ... */ }
-
-        // --- INISIALISASI SAAT HALAMAN DIMUAT ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Ambil data awal dari Django
-            const initialSensorData = getInitialData();
-            
-            // 2. Inisialisasi chart dengan data tersebut
-            initializeCharts(initialSensorData);
-
-            // 3. Muat data cuaca
-            loadWeatherData();
-            
-            // 4. Atur refresh otomatis
-            setInterval(refreshSensorData, 5000); // refresh data sensor setiap 5 detik
-            setInterval(loadWeatherData, 600000); // refresh cuaca setiap 10 menit
-        });
-    </script>
+    <!-- Memanggil file JavaScript khusus untuk halaman monitoring -->
+    <script src="{% static 'control/monitoring_script.js' %}"></script>
 </body>
 </html>
